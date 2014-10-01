@@ -1,0 +1,20 @@
+{
+  "name": "paw.js",
+  "version": "0.0.0",
+  "homepage": "https://github.com/dameleon/paw.js",
+  "authors": [
+    "dameleon <dameleon@gmail.com>"
+  ],
+  "main": "dist/paw.min.js",
+  "keywords": [
+    "touchevent"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
