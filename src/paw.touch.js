@@ -16,13 +16,13 @@ var EVENT_INIT_DICT = {
         CANCELABLE: true
 };
 
-function PawTouch(setting, eventInfo) {
-    var x = eventInfo.pageX;
-    var y = eventInfo.pageY;
+function PawTouch(setting, touchInfo) {
+    var x = touchInfo.pageX;
+    var y = touchInfo.pageY;
 
-    this.id = eventInfo.identifier;
+    this.id = touchInfo.identifier;
     this.setting = setting;
-    this.target = eventInfo.target;
+    this.target = touchInfo.target;
     this.startX = x;
     this.startY = y;
     this.lastX = x;
@@ -64,20 +64,20 @@ PawTouch.prototype = {
     handleEvent: _handleEvent
 };
 
-function _move(eventInfo) {
-    this.lastX = eventInfo.pageX;
-    this.lastY = eventInfo.pageY;
+function _move(touchInfo) {
+    this.lastX = touchInfo.pageX;
+    this.lastY = touchInfo.pageY;
 }
 
-function _end(eventInfo) {
+function _end(touchInfo) {
     var setting = this.setting;
-    var x = this.lastX = eventInfo.pageX;
-    var y = this.lastY = eventInfo.pageY;
+    var x = this.lastX = touchInfo.pageX;
+    var y = this.lastY = touchInfo.pageY;
     var dx = x - this.startX;
     var dy = y - this.startY;
     var isDoubleTap;
 
-    if (Math.sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
+    if (global.Math.sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
         isDoubleTap = PawTouch.isDoubleTap(this.target, setting.doubleTapDuration);
         this.triggerEvent(isDoubleTap && EVENTS.DOUBLE_TAP || EVENTS.TAP, {
             pageX: x,
