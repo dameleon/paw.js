@@ -1,9 +1,6 @@
 ;(function(global, undefined) {
 'use strict';
 
-//! Object.keys Polyfill from [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys#Polyfill)
-Object.keys||(Object.keys=function(){var e=Object.prototype.hasOwnProperty,f=!{toString:null}.propertyIsEnumerable("toString"),c="toString toLocaleString valueOf hasOwnProperty isPrototypeOf propertyIsEnumerable constructor".split(" "),g=c.length;return function(b){if("object"!==typeof b&&"function"!==typeof b||null===b)throw new TypeError("Object.keys called on non-object");var d=[],a;for(a in b)e.call(b,a)&&d.push(a);if(f)for(a=0;a<g;a++)e.call(b,c[a])&&d.push(c[a]);return d}}());
-
 var document = global.document;
 var IS_SUPPORT_TOUCH = 'ontouchstart' in document;
 var EVENTS = {
@@ -13,64 +10,30 @@ var EVENTS = {
         CANCEL : IS_SUPPORT_TOUCH && 'touchcancel' || 'mouseleave'
 };
 var defaultSetting = {
-        cancelTimeDuration: 200,
-        workingPixel: 5,
+        pressDuration: 500,
+        doubleTapDuration: 400,
+        motionThreshold: 5,
+        preventClickEvent: true
 };
-
-
-function PawTouch(timeoutDuration, workingPixel, touchInfo) {
-    var that = this;
-
-    this.id = touchInfo.identifier;
-    this.workingPixel = workingPixel;
-    this.target = touchInfo.target;
-    this.startX = touchInfo.pageX;
-    this.startY = touchInfo.pageY;
-    this.timer = setTimeout(function() {
-        that._timeout();
-    }, timeoutDuration);
-}
-
-
-PowTouch.prototype = {
-    constructor: PowTouch
-    move: _move,
-    end: _end,
-    cancel: _cancel,
-    _timeout: _timeout
-};
-
-
-function _move(eventInfo) {
-
-}
-
-function _end(eventInfo) {
-
-}
-
-function _cancel(eventInfo) {
-
-}
-
-function _timeout() {
-
-}
-
 
 function Paw(rootNode, option) {
     if (rootNode && !rootNode.addEventListener) {
-        throw new Error();
+        throw new Error('Argument Error: First argument must be Node');
     }
     var setting = this.setting = {};
 
+    if (!option) {
+        option = {};
+    }
     for (var key in defaultSetting) {
-        setting[key] = option[key] || defaultSetting[key];
+        setting[key] = (option[key] !== undefined) ? option[key] : defaultSetting[key];
     }
     this.rootNode = rootNode || document;
     this.rootNode.addEventListener(EVENTS.START, this);
     this.handlers = {};
 }
+
+Paw.keys = Object.keys || (_ && _.keys);
 
 Paw.prototype = {
     constructor: Paw,
@@ -79,6 +42,8 @@ Paw.prototype = {
     onMove: _onMove,
     onEnd: _onEnd,
     onCancel: _onCancel,
+    onTimeout: _onTimeout,
+    setTimer: _setTimer,
     bindEvents: _bindEvents,
     unbindEvents: _unbindEvents
 };
@@ -104,11 +69,13 @@ function _onStart(ev) {
     var setting = this.setting;
     var handlers = this.handlers;
     var touches = __getTouchInfoList(ev);
-    var handler;
+    var handler, id;
 
     for (var i = 0, iz = touches.length; i < iz; i++) {
-        handler = new PowTouch(setting, touches[i]);
-        handlers[handler.id] = handler;
+        handler = new Paw.Touch(setting, touches[i]);
+        id = handler.id;
+        handlers[id] = handler;
+        this.setTimer(id);
     }
     this.bindEvents();
 }
@@ -138,8 +105,8 @@ function _onEnd(ev) {
         handler = handlers[id];
         if (handler) {
             handler.end(touchInfo);
+            handlers[id] = null;
         }
-        handlers[id] = null;
     }
     this.unbindEvents();
 }
@@ -155,10 +122,28 @@ function _onCancel(ev) {
         handler = handlers[id];
         if (handler) {
             handler.cancel(touchInfo);
+            handlers[id] = null;
         }
-        handlers[id] = null;
     }
     this.unbindEvents();
+}
+
+function _onTimeout(id) {
+    var handlers = this.handlers;
+    var handler = handlers[id];
+
+    if (handler) {
+        handler.timeout();
+        handlers[id] = null;
+    }
+}
+
+function _setTimer(id) {
+    var that = this;
+
+    global.setTimeout(function() {
+        that.onTimeout(id);
+    }, this.setting.pressDuration);
 }
 
 function _bindEvents() {
@@ -174,7 +159,7 @@ function _bindEvents() {
 }
 
 function _unbindEvents() {
-    if (!this.boundEvents || Object.keys(this.handlers).length > 0) {
+    if (!this.boundEvents || Paw.keys(this.handlers).length > 0) {
         return;
     }
     var rootNode = this.rootNode;
@@ -186,8 +171,11 @@ function _unbindEvents() {
 }
 
 function __getTouchInfoList(ev) {
-    return IS_SUPPORT_TOUCH ? ev.changedTouches || [ev];
+    return IS_SUPPORT_TOUCH && ev.changedTouches || [ev];
 }
 
+
+// exports
+global.Paw = Paw;
 
 })(this.self || global, void 0);

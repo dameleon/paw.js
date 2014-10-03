@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+<meta charset="UTF-8">
+<title>moge</title>
+<script src="../src/paw.js"></script>
+<script src="../src/paw.touch.js"></script>
+</head>
+<body>
+<a href="google.com" id="hoge">ほげほげほげほげほげほげ</a>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    new Paw(null, {
+    });
+    document.addEventListener('tap', function(ev) {
+        console.log(ev);
+    });
+    document.addEventListener('press', function(ev) {
+        console.log(ev);
+    });
+    document.addEventListener('doubletap', function(ev) {
+        console.log(ev);
+    });
+    document.addEventListener('click', function(ev) {
+        console.log(ev);
+    });
+});
+</script>
+</body>
+</html>
