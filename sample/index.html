@@ -6,12 +6,24 @@
 <title>moge</title>
 <script src="../src/paw.js"></script>
 <script src="../src/paw.touch.js"></script>
+<style>
+.container {
+    height: 100px;
+    background: #eee;
+}
+.container > a {
+    background: #ccc;
+}
+</style>
 </head>
 <body>
-<a href="google.com" id="hoge">ほげほげほげほげほげほげ</a>
+<div class="container"><a href="google.com" id="hoge">ほげほげほげほげほげほげ</a></div>
+<div class="container"><a href="google.com" id="fuga">ふがふがふがふがふがふが</a></div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     new Paw(null, {
+        motionThreshold: 20,
+        pressDuration: 1000
     });
     document.addEventListener('tap', function(ev) {
         console.log(ev);

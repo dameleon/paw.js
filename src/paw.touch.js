@@ -15,18 +15,16 @@ var EVENT_INIT_DICT = {
         BUBBLES: true,
         CANCELABLE: true
 };
+var DOCUMENT_POSITION_IDENTICAL = 0;
+var DOCUMENT_POSITION_ANCESTOR = global.Node.DOCUMENT_POSITION_PRECEDING | global.Node.DOCUMENT_POSITION_CONTAINS;
+var DOCUMENT_POSITION_DESCENDANT = global.Node.DOCUMENT_POSITION_FOLLOWING | global.Node.DOCUMENT_POSITION_CONTAINED_BY;
+var __sqrt = global.Math.sqrt;
 
-function PawTouch(setting, touchInfo) {
-    var x = touchInfo.pageX;
-    var y = touchInfo.pageY;
-
-    this.id = touchInfo.identifier;
+function PawTouch(touchInfo, setting) {
     this.setting = setting;
     this.target = touchInfo.target;
-    this.startX = x;
-    this.startY = y;
-    this.lastX = x;
-    this.lastY = y;
+    this.startX = this.lastX = touchInfo.pageX;
+    this.startY = this.lastY = touchInfo.pageY;
     if (setting.preventClickEvent) {
         this.target.addEventListener(EVENTS.CLICK, this);
     }
@@ -61,23 +59,34 @@ PawTouch.prototype = {
     cancel: _dispose,
     dispose: _dispose,
     triggerEvent: _triggerEvent,
-    handleEvent: _handleEvent
+    handleEvent: _handleEvent,
+    replaceTarget: _replaceTarget
 };
 
 function _move(touchInfo) {
     this.lastX = touchInfo.pageX;
     this.lastY = touchInfo.pageY;
+    this.lastTarget = touchInfo.target;
 }
 
 function _end(touchInfo) {
     var setting = this.setting;
-    var x = this.lastX = touchInfo.pageX;
-    var y = this.lastY = touchInfo.pageY;
+    var x = touchInfo.pageX;
+    var y = touchInfo.pageY;
     var dx = x - this.startX;
     var dy = y - this.startY;
-    var isDoubleTap;
+    var isDoubleTap, pos;
 
-    if (global.Math.sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
+    if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
+        pos = this.target.compareDocumentPosition(touchInfo.target);
+        // replace target to the current target in the case of descendants or ancestors
+        if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
+            this.replaceTarget(touchInfo.target);
+        }
+        // not processed in the case of sibling elements
+        else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
+            return this.dispose();
+        }
         isDoubleTap = PawTouch.isDoubleTap(this.target, setting.doubleTapDuration);
         this.triggerEvent(isDoubleTap && EVENTS.DOUBLE_TAP || EVENTS.TAP, {
             pageX: x,
@@ -100,13 +109,25 @@ function _timeout() {
     var y = this.lastY;
     var dx = x - this.startX;
     var dy = y - this.startY;
+    var pos;
 
-    if (Math.sqrt(dx * dx + dy * dy) <= this.setting.motionThreshold) {
+    if (__sqrt(dx * dx + dy * dy) <= this.setting.motionThreshold) {
+        pos = this.target.compareDocumentPosition(this.lastTarget);
+        // replace target to the current target in the case of descendants or ancestors
+        if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
+            this.replaceTarget(this.lastTarget);
+        }
+        // not processed in the case of sibling elements
+        else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
+            return this.dispose();
+        }
         this.triggerEvent(EVENTS.PRESS, {
             pageX: x,
             pageY: y
         });
+        PawTouch.updateLastTapTarget(this.target);
     }
+    this.dispose();
 }
 
 function _triggerEvent(name, option) {
@@ -130,6 +151,16 @@ function _handleEvent(ev) {
     this.target.removeEventListener(EVENTS.CLICK, this);
     this.target = null;
     return false;
+}
+
+function _replaceTarget(target) {
+    var oldTarget = this.target;
+
+    this.target = target;
+    if (this.setting.preventClickEvent) {
+        oldTarget.removeEventListener(EVENTS.CLICK, this);
+        this.target.addEventListener(EVENTS.CLICK, this);
+    }
 }
 
 // export

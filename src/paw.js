@@ -3,11 +3,12 @@
 
 var document = global.document;
 var IS_SUPPORT_TOUCH = 'ontouchstart' in document;
+var IS_SUPPORT_POINTER_EVENT = !!global.PointerEvent;
 var EVENTS = {
-        START  : IS_SUPPORT_TOUCH && 'touchstart'  || 'mousedown',
-        MOVE   : IS_SUPPORT_TOUCH && 'touchmove'   || 'mousemove',
-        END    : IS_SUPPORT_TOUCH && 'touchend'    || 'mouseup',
-        CANCEL : IS_SUPPORT_TOUCH && 'touchcancel' || 'mouseleave'
+        START  : IS_SUPPORT_TOUCH && 'touchstart'  || IS_SUPPORT_POINTER_EVENT && 'pointerdown'   || 'mousedown',
+        MOVE   : IS_SUPPORT_TOUCH && 'touchmove'   || IS_SUPPORT_POINTER_EVENT && 'pointermove'   || 'mousemove',
+        END    : IS_SUPPORT_TOUCH && 'touchend'    || IS_SUPPORT_POINTER_EVENT && 'pointerup'     || 'mouseup',
+        CANCEL : IS_SUPPORT_TOUCH && 'touchcancel' || IS_SUPPORT_POINTER_EVENT && 'pointercancel' || 'mouseleave'
 };
 var defaultSetting = {
         pressDuration: 500,
@@ -15,6 +16,7 @@ var defaultSetting = {
         motionThreshold: 5,
         preventClickEvent: true
 };
+var identifierKey = IS_SUPPORT_TOUCH && 'identifier' || IS_SUPPORT_POINTER_EVENT && 'pointerId' || 'button';
 
 function Paw(rootNode, option) {
     if (rootNode && !rootNode.addEventListener) {
@@ -31,6 +33,7 @@ function Paw(rootNode, option) {
     this.rootNode = rootNode || document;
     this.rootNode.addEventListener(EVENTS.START, this);
     this.handlers = {};
+    this.timers = {};
 }
 
 Paw.keys = Object.keys || (_ && _.keys);
@@ -44,6 +47,7 @@ Paw.prototype = {
     onCancel: _onCancel,
     onTimeout: _onTimeout,
     setTimer: _setTimer,
+    clearTimer: _clearTimer,
     bindEvents: _bindEvents,
     unbindEvents: _unbindEvents
 };
@@ -69,11 +73,12 @@ function _onStart(ev) {
     var setting = this.setting;
     var handlers = this.handlers;
     var touches = __getTouchInfoList(ev);
-    var handler, id;
+    var handler, touchInfo, id;
 
     for (var i = 0, iz = touches.length; i < iz; i++) {
-        handler = new Paw.Touch(setting, touches[i]);
-        id = handler.id;
+        touchInfo = touches[i];
+        id = touchInfo[identifierKey];
+        handler = new Paw.Touch(touchInfo, setting);
         handlers[id] = handler;
         this.setTimer(id);
     }
@@ -83,11 +88,12 @@ function _onStart(ev) {
 function _onMove(ev) {
     var handlers = this.handlers;
     var touches = __getTouchInfoList(ev);
-    var touchInfo, handler;
+    var touchInfo, handler, id;
 
     for (var i = 0, iz = touches.length; i < iz; i++) {
         touchInfo = touches[i];
-        handler = handlers[touchInfo.identifier];
+        id = touchInfo[identifierKey];
+        handler = handlers[id];
         if (handler) {
             handler.move(touchInfo);
         }
@@ -99,15 +105,18 @@ function _onEnd(ev) {
     var touches = __getTouchInfoList(ev);
     var touchInfo, handler, id;
 
+
     for (var i = 0, iz = touches.length; i < iz; i++) {
         touchInfo = touches[i];
-        id = touchInfo.identifier;
+        id = touchInfo[identifierKey];
         handler = handlers[id];
         if (handler) {
             handler.end(touchInfo);
-            handlers[id] = null;
+            delete handlers[id];
         }
+        this.clearTimer(id);
     }
+
     this.unbindEvents();
 }
 
@@ -118,12 +127,13 @@ function _onCancel(ev) {
 
     for (var i = 0, iz = touches.length; i < iz; i++) {
         touchInfo = touches[i];
-        id = touchInfo.identifier;
+        id = touchInfo[identifierKey];
         handler = handlers[id];
         if (handler) {
             handler.cancel(touchInfo);
-            handlers[id] = null;
+            delete handlers[id];
         }
+        this.clearTimer(id);
     }
     this.unbindEvents();
 }
@@ -134,16 +144,24 @@ function _onTimeout(id) {
 
     if (handler) {
         handler.timeout();
-        handlers[id] = null;
+        delete handlers[id];
     }
+    this.clearTimer(id);
 }
 
 function _setTimer(id) {
     var that = this;
 
-    global.setTimeout(function() {
+    this.timers[id] = global.setTimeout(function() {
         that.onTimeout(id);
     }, this.setting.pressDuration);
+}
+
+function _clearTimer(id) {
+    var timers = this.timers;
+
+    global.clearTimeout(timers[id]);
+    delete timers[id];
 }
 
 function _bindEvents() {
@@ -173,7 +191,6 @@ function _unbindEvents() {
 function __getTouchInfoList(ev) {
     return IS_SUPPORT_TOUCH && ev.changedTouches || [ev];
 }
-
 
 // exports
 global.Paw = Paw;
