@@ -7,35 +7,114 @@
 <script src="../src/paw.js"></script>
 <script src="../src/paw.touch.js"></script>
 <style>
-.container {
-    height: 100px;
-    background: #eee;
+html, body, div, ul, li {
+    margin: 0;
+    padding: 0;
 }
-.container > a {
-    background: #ccc;
+.list {
+    list-style: none;
+}
+.list > .item {
+    position: relative;
+    height: 50px;
+    border-top: solid 1px #f7f7f7;
+    border-bottom: solid 1px #cccccc;
+    background: #ddd;
+}
+.inner-button {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: #aaa;
+    user-select: none;
 }
 </style>
 </head>
 <body>
-<div class="container"><a href="google.com" id="hoge">ほげほげほげほげほげほげ</a></div>
-<div class="container"><a href="google.com" id="fuga">ふがふがふがふがふがふが</a></div>
+<ul class="list">
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+    <li class="item">
+        <div class="inner-button">hoge</div>
+    </li>
+</ul>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     new Paw(null, {
+        motionThreshold: 200,
         pressDuration: 1000
     });
-    document.addEventListener('tap', function(ev) {
-        console.log(ev);
+    var itemList = [].slice.call(document.querySelectorAll('.item'));
+    var innerBtnList = [].slice.call(document.querySelectorAll('.inner-button'));
+
+    itemList.forEach(function(item) {
+        item.addEventListener('tap', _onTapItem);
     });
-    document.addEventListener('press', function(ev) {
-        console.log(ev);
+    innerBtnList.forEach(function(innerBtn) {
+        innerBtn.addEventListener('tap', _onTapInnerBtn);
     });
-    document.addEventListener('doubletap', function(ev) {
-        console.log(ev);
-    });
-    document.addEventListener('click', function(ev) {
-        console.log(ev);
-    });
+
+    function _onTapItem(ev) {
+        console.log('item', ev);
+    }
+    function _onTapInnerBtn(ev) {
+        console.log('inner-btn', ev);
+    }
 });
 </script>
 </body>
