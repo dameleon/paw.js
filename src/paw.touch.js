@@ -77,10 +77,7 @@ function _end(touchInfo) {
             return this.dispose();
         }
         isDoubleTap = __isDoubleTap(this.target, setting.doubleTapDuration);
-        this.triggerEvent(isDoubleTap && EVENT_TYPES.DOUBLE_TAP || EVENT_TYPES.TAP, {
-            pageX: x,
-            pageY: y
-        });
+        this.triggerEvent(isDoubleTap && EVENT_TYPES.DOUBLE_TAP || EVENT_TYPES.TAP, x, y);
         __updateLastTapTarget(this.target);
     }
     this.dispose();
@@ -116,30 +113,22 @@ function _timeout() {
         else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
             return this.dispose();
         }
-        this.triggerEvent(EVENT_TYPES.PRESS, {
-            pageX: x,
-            pageY: y
-        });
+        this.triggerEvent(EVENT_TYPES.PRESS, x, y);
     }
     this.dispose();
 }
 
-function _triggerEvent(name, option) {
-    var detail = {
-        id: this.id,
-        eventInterface: EVENT_INIT_DICT.DETAIL_EVENT_INTERFACE
-    };
-    var dict = {
-        bubbles: EVENT_INIT_DICT.BUBBLES,
-        cancelable: EVENT_INIT_DICT.CANCELABLE,
-        detail: detail
-    };
-    var event;
+function _triggerEvent(type, x, y) {
+    var event = Paw.createTouchEvent(
+            type,
+            this.target,
+            EVENT_INIT_DICT.BUBBLES,
+            EVENT_INIT_DICT.CANCELABLE,
+            x,
+            y,
+            this.id
+    );
 
-    for (var key in option) {
-        detail[key] = option[key];
-    }
-    event = new global.CustomEvent(name, dict);
     this.target.dispatchEvent(event);
 }
 
