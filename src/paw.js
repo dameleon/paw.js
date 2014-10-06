@@ -62,7 +62,8 @@ Paw.prototype = {
     setTimer: _setTimer,
     clearTimer: _clearTimer,
     bindEvents: _bindEvents,
-    unbindEvents: _unbindEvents
+    unbindEvents: _unbindEvents,
+    dispose: _dispose
 };
 
 function _handleEvent(ev) {
@@ -129,7 +130,6 @@ function _onEnd(ev) {
         }
         this.clearTimer(id);
     }
-
     this.unbindEvents();
 }
 
@@ -201,6 +201,22 @@ function _unbindEvents() {
     rootNode.removeEventListener(EVENTS.CANCEL, this);
 }
 
+function _dispose(cond) {
+    var handlers = this.handlers;
+    var rootNode = this.rootNode;
+
+    for (var id in handlers) {
+        delete handlers[id];
+        this.clearTimer(id);
+    }
+    rootNode.removeEventListener(EVENTS.START);
+    this.unbindEvents();
+    if (cond) {
+        Paw.Touch.dispose();
+    }
+}
+
+//// private methods
 function __getTouchInfoList(ev) {
     return IS_SUPPORT_TOUCH_EVENT && ev.changedTouches || [ev];
 }
