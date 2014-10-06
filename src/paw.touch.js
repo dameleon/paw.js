@@ -25,6 +25,7 @@ function PawTouch(id, touchInfo, setting) {
     this.lastTouchInfo = touchInfo;
     this.startX = this.lastX = touchInfo.pageX;
     this.startY = this.lastY = touchInfo.pageY;
+    this.disposeTimer = null;
     if (setting.preventClickEvent) {
         this.target.addEventListener(EVENT_TYPES.CLICK, this);
     }
@@ -59,7 +60,8 @@ PawTouch.prototype = {
     dispose: _dispose,
     triggerEvent: _triggerEvent,
     handleEvent: _handleEvent,
-    replaceTarget: _replaceTarget
+    replaceTarget: _replaceTarget,
+    disposeTarget: _disposeTarget
 };
 
 function _move(touchInfo) {
@@ -95,9 +97,14 @@ function _end(touchInfo) {
 }
 
 function _dispose() {
-    global.clearTimeout(this.cancelTimer);
-    if (!this.setting.preventClickEvent) {
-        this.target = null;
+    var that = this;
+
+    if (this.setting.preventClickEvent) {
+        this.disposeTimer = global.setTimeout(function() {
+            that.disposeTarget();
+        }, 400);
+    } else {
+        this.disposeTarget();
     }
 }
 
@@ -149,8 +156,8 @@ function _triggerEvent(name, option) {
 
 function _handleEvent(ev) {
     ev.preventDefault();
-    this.target.removeEventListener(EVENT_TYPES.CLICK, this);
-    this.target = null;
+    global.clearTimeout(this.disposeTimer);
+    this.disposeTarget();
     return false;
 }
 
@@ -161,6 +168,17 @@ function _replaceTarget(target) {
     if (this.setting.preventClickEvent) {
         oldTarget.removeEventListener(EVENT_TYPES.CLICK, this);
         this.target.addEventListener(EVENT_TYPES.CLICK, this);
+    }
+}
+
+function _disposeTarget() {
+    var target = this.target;
+
+    if (target) {
+        if (this.setting.preventClickEvent) {
+            target.removeEventListener(EVENT_TYPES.CLICK, this);
+        }
+        target = null;
     }
 }
 
