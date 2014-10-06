@@ -79,11 +79,11 @@ function _end(touchInfo) {
 
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
         pos = this.target.compareDocumentPosition(touchInfo.target);
-        // replace target to the current target in the case of descendants or ancestors
+        // NOTE: replace target to the current target in the case of descendants or ancestors
         if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
             this.replaceTarget(touchInfo.target);
         }
-        // not processed in the case of sibling elements
+        // NOTE: not processed in the case of sibling elements
         else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
             return this.dispose();
         }
@@ -113,11 +113,11 @@ function _timeout() {
 
     if (__sqrt(dx * dx + dy * dy) <= this.setting.motionThreshold) {
         pos = this.target.compareDocumentPosition(this.lastTarget);
-        // replace target to the current target in the case of descendants or ancestors
+        // NOTE: replace target to the current target in the case of descendants or ancestors
         if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
             this.replaceTarget(this.lastTarget);
         }
-        // not processed in the case of sibling elements
+        // NOTE: not processed in the case of sibling elements
         else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
             return this.dispose();
         }
