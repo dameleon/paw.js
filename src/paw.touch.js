@@ -17,6 +17,10 @@ var DOCUMENT_POSITION_IDENTICAL = 0;
 var DOCUMENT_POSITION_ANCESTOR = global.Node.DOCUMENT_POSITION_PRECEDING | global.Node.DOCUMENT_POSITION_CONTAINS;
 var DOCUMENT_POSITION_DESCENDANT = global.Node.DOCUMENT_POSITION_FOLLOWING | global.Node.DOCUMENT_POSITION_CONTAINED_BY;
 var __sqrt = global.Math.sqrt;
+var __lastTapInfo = {
+    target: null,
+    updatedTime: null
+};
 
 function PawTouch(id, touchInfo, setting) {
     this.id = id;
@@ -31,24 +35,10 @@ function PawTouch(id, touchInfo, setting) {
     }
 }
 
-PawTouch.lastTapInfo = {
-    target: null,
-    updatedTime: null
-};
-PawTouch.updateLastTapTarget = function(target) {
-    var info = PawTouch.lastTapInfo;
+PawTouch.dispose = function() {
+    var info = __lastTapInfo;
 
-    info.target = target;
-    info.updatedTime = Date.now();
-};
-PawTouch.isDoubleTap = function(target, duration) {
-    var info = PawTouch.lastTapInfo;
-
-    if (info.target === target &&
-        duration >= (Date.now() - info.updatedTime)) {
-            return true;
-    }
-    return false;
+    info.target = info.updatedTime = null;
 };
 
 PawTouch.prototype = {
@@ -86,12 +76,12 @@ function _end(touchInfo) {
         else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
             return this.dispose();
         }
-        isDoubleTap = PawTouch.isDoubleTap(this.target, setting.doubleTapDuration);
+        isDoubleTap = __isDoubleTap(this.target, setting.doubleTapDuration);
         this.triggerEvent(isDoubleTap && EVENT_TYPES.DOUBLE_TAP || EVENT_TYPES.TAP, {
             pageX: x,
             pageY: y
         });
-        PawTouch.updateLastTapTarget(this.target);
+        __updateLastTapTarget(this.target);
     }
     this.dispose();
 }
@@ -130,7 +120,6 @@ function _timeout() {
             pageX: x,
             pageY: y
         });
-        PawTouch.updateLastTapTarget(this.target);
     }
     this.dispose();
 }
@@ -180,6 +169,24 @@ function _disposeTarget() {
         }
         target = null;
     }
+}
+
+//// private methods
+function __updateLastTapTarget(target) {
+    var info = __lastTapInfo;
+
+    info.target = target;
+    info.updatedTime = Date.now();
+}
+
+function __isDoubleTap(target, duration) {
+    var info = __lastTapInfo;
+
+    if (info.target === target &&
+        duration >= (Date.now() - info.updatedTime)) {
+            return true;
+    }
+    return false;
 }
 
 // export
