@@ -2,35 +2,34 @@
 'use strict';
 
 if (!global.Paw) {
-    throw new Error();
+    throw new Error('"Paw" does not exist in global');
 }
 var Paw = global.Paw;
-var EVENTS = {
-        TAP: 'tap',
-        DOUBLE_TAP: 'doubletap',
-        PRESS: 'press',
-        CLICK: 'click'
-};
+var EVENT_TYPES = Paw.EVENT_TYPES;
 var EVENT_INIT_DICT = {
         BUBBLES: true,
-        CANCELABLE: true
+        CANCELABLE: true,
+        DETAIL_EVENT_INTERFACE: Paw.IS_SUPPORT_TOUCH_EVENT && Paw.EVENT_INTERFACES.TOUCH_EVENT ||
+                                Paw.IS_SUPPORT_POINTER_EVENT && Paw.EVENT_INTERFACES.POINTER_EVENT ||
+                                Paw.EVENT_INTERFACES.MOUSE_EVENT
 };
 var DOCUMENT_POSITION_IDENTICAL = 0;
 var DOCUMENT_POSITION_ANCESTOR = global.Node.DOCUMENT_POSITION_PRECEDING | global.Node.DOCUMENT_POSITION_CONTAINS;
 var DOCUMENT_POSITION_DESCENDANT = global.Node.DOCUMENT_POSITION_FOLLOWING | global.Node.DOCUMENT_POSITION_CONTAINED_BY;
 var __sqrt = global.Math.sqrt;
 
-function PawTouch(touchInfo, setting) {
+function PawTouch(id, touchInfo, setting) {
+    this.id = id;
     this.setting = setting;
     this.target = touchInfo.target;
+    this.lastTouchInfo = touchInfo;
     this.startX = this.lastX = touchInfo.pageX;
     this.startY = this.lastY = touchInfo.pageY;
     if (setting.preventClickEvent) {
-        this.target.addEventListener(EVENTS.CLICK, this);
+        this.target.addEventListener(EVENT_TYPES.CLICK, this);
     }
 }
 
-PawTouch.EVENTS = EVENTS;
 PawTouch.lastTapInfo = {
     target: null,
     updatedTime: null
@@ -64,9 +63,7 @@ PawTouch.prototype = {
 };
 
 function _move(touchInfo) {
-    this.lastX = touchInfo.pageX;
-    this.lastY = touchInfo.pageY;
-    this.lastTarget = touchInfo.target;
+    this.lastTouchInfo = touchInfo;
 }
 
 function _end(touchInfo) {
@@ -88,7 +85,7 @@ function _end(touchInfo) {
             return this.dispose();
         }
         isDoubleTap = PawTouch.isDoubleTap(this.target, setting.doubleTapDuration);
-        this.triggerEvent(isDoubleTap && EVENTS.DOUBLE_TAP || EVENTS.TAP, {
+        this.triggerEvent(isDoubleTap && EVENT_TYPES.DOUBLE_TAP || EVENT_TYPES.TAP, {
             pageX: x,
             pageY: y
         });
@@ -105,23 +102,24 @@ function _dispose() {
 }
 
 function _timeout() {
-    var x = this.lastX;
-    var y = this.lastY;
+    var touchInfo = this.lastTouchInfo;
+    var x = touchInfo.pageX;
+    var y = touchInfo.pageY;
     var dx = x - this.startX;
     var dy = y - this.startY;
     var pos;
 
     if (__sqrt(dx * dx + dy * dy) <= this.setting.motionThreshold) {
-        pos = this.target.compareDocumentPosition(this.lastTarget);
+        pos = this.target.compareDocumentPosition(touchInfo.target);
         // NOTE: replace target to the current target in the case of descendants or ancestors
         if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-            this.replaceTarget(this.lastTarget);
+            this.replaceTarget(touchInfo.target);
         }
         // NOTE: not processed in the case of sibling elements
         else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
             return this.dispose();
         }
-        this.triggerEvent(EVENTS.PRESS, {
+        this.triggerEvent(EVENT_TYPES.PRESS, {
             pageX: x,
             pageY: y
         });
@@ -131,7 +129,10 @@ function _timeout() {
 }
 
 function _triggerEvent(name, option) {
-    var detail = {};
+    var detail = {
+        id: this.id,
+        eventInterface: EVENT_INIT_DICT.DETAIL_EVENT_INTERFACE
+    };
     var dict = {
         bubbles: EVENT_INIT_DICT.BUBBLES,
         cancelable: EVENT_INIT_DICT.CANCELABLE,
@@ -148,7 +149,7 @@ function _triggerEvent(name, option) {
 
 function _handleEvent(ev) {
     ev.preventDefault();
-    this.target.removeEventListener(EVENTS.CLICK, this);
+    this.target.removeEventListener(EVENT_TYPES.CLICK, this);
     this.target = null;
     return false;
 }
@@ -158,8 +159,8 @@ function _replaceTarget(target) {
 
     this.target = target;
     if (this.setting.preventClickEvent) {
-        oldTarget.removeEventListener(EVENTS.CLICK, this);
-        this.target.addEventListener(EVENTS.CLICK, this);
+        oldTarget.removeEventListener(EVENT_TYPES.CLICK, this);
+        this.target.addEventListener(EVENT_TYPES.CLICK, this);
     }
 }
 

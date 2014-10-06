@@ -2,13 +2,13 @@
 'use strict';
 
 var document = global.document;
-var IS_SUPPORT_TOUCH = 'ontouchstart' in document;
+var IS_SUPPORT_TOUCH_EVENT = 'ontouchstart' in document;
 var IS_SUPPORT_POINTER_EVENT = !!global.PointerEvent;
 var EVENTS = {
-        START  : IS_SUPPORT_TOUCH && 'touchstart'  || IS_SUPPORT_POINTER_EVENT && 'pointerdown'   || 'mousedown',
-        MOVE   : IS_SUPPORT_TOUCH && 'touchmove'   || IS_SUPPORT_POINTER_EVENT && 'pointermove'   || 'mousemove',
-        END    : IS_SUPPORT_TOUCH && 'touchend'    || IS_SUPPORT_POINTER_EVENT && 'pointerup'     || 'mouseup',
-        CANCEL : IS_SUPPORT_TOUCH && 'touchcancel' || IS_SUPPORT_POINTER_EVENT && 'pointercancel' || 'mouseleave'
+        START  : IS_SUPPORT_TOUCH_EVENT && 'touchstart'  || IS_SUPPORT_POINTER_EVENT && 'pointerdown'   || 'mousedown',
+        MOVE   : IS_SUPPORT_TOUCH_EVENT && 'touchmove'   || IS_SUPPORT_POINTER_EVENT && 'pointermove'   || 'mousemove',
+        END    : IS_SUPPORT_TOUCH_EVENT && 'touchend'    || IS_SUPPORT_POINTER_EVENT && 'pointerup'     || 'mouseup',
+        CANCEL : IS_SUPPORT_TOUCH_EVENT && 'touchcancel' || IS_SUPPORT_POINTER_EVENT && 'pointercancel' || 'mouseleave'
 };
 var defaultSetting = {
         pressDuration: 500,
@@ -16,7 +16,7 @@ var defaultSetting = {
         motionThreshold: 5,
         preventClickEvent: true
 };
-var identifierKey = IS_SUPPORT_TOUCH && 'identifier' || IS_SUPPORT_POINTER_EVENT && 'pointerId' || 'button';
+var identifierKey = IS_SUPPORT_TOUCH_EVENT && 'identifier' || IS_SUPPORT_POINTER_EVENT && 'pointerId' || 'button';
 
 function Paw(rootNode, option) {
     if (rootNode && !rootNode.addEventListener) {
@@ -37,6 +37,19 @@ function Paw(rootNode, option) {
 }
 
 Paw.keys = Object.keys || (_ && _.keys);
+Paw.IS_SUPPORT_TOUCH_EVENT = IS_SUPPORT_TOUCH_EVENT;
+Paw.IS_SUPPORT_POINTER_EVENT = IS_SUPPORT_POINTER_EVENT;
+Paw.EVENT_TYPES = {
+        TAP: 'tap',
+        DOUBLE_TAP: 'doubletap',
+        PRESS: 'press',
+        CLICK: 'click'
+};
+Paw.EVENT_INTERFACES = {
+    TOUCH_EVENT   : 'touchevent',
+    POINTER_EVENT : 'pointerevent',
+    MOUSE_EVENT   : 'mouseevent'
+};
 
 Paw.prototype = {
     constructor: Paw,
@@ -78,7 +91,7 @@ function _onStart(ev) {
     for (var i = 0, iz = touches.length; i < iz; i++) {
         touchInfo = touches[i];
         id = touchInfo[identifierKey];
-        handler = new Paw.Touch(touchInfo, setting);
+        handler = new Paw.Touch(id, touchInfo, setting);
         handlers[id] = handler;
         this.setTimer(id);
     }
@@ -189,7 +202,7 @@ function _unbindEvents() {
 }
 
 function __getTouchInfoList(ev) {
-    return IS_SUPPORT_TOUCH && ev.changedTouches || [ev];
+    return IS_SUPPORT_TOUCH_EVENT && ev.changedTouches || [ev];
 }
 
 // exports
