@@ -85,9 +85,9 @@ Paw.createTouchEvent = (function(env) {
         };
     }
     // create touch event for android stock browser spec
-    else if (env.isAndroid && !env.isChrome) {
+    else if (env.isAndroid) {
         return function(type, target, bubbles, cancelable, pageX, pageY, identifier) {
-            var event = document.createEvent('MouseEvent');
+            var event = document.createEvent('TouchEvent');
             var touchList = _getTouchList(target, identifier, pageX, pageY);
 
             event.initTouchEvent(
@@ -111,7 +111,7 @@ Paw.createTouchEvent = (function(env) {
     // w3c spec touch event
     else {
         return function(type, target, bubbles, cancelable, pageX, pageY, identifier) {
-            var event = document.createEvent('MouseEvent');
+            var event = document.createEvent('TouchEvent');
             var touchList = _getTouchList(target, identifier, pageX, pageY);
 
             event.initTouchEvent(
@@ -330,7 +330,7 @@ function __getTouchInfoList(ev) {
 }
 
 function __getEnvData(ua) {
-    ua = ua.toLowerString();
+    ua = ua.toLowerCase();
 
     var appleWebkitRE = /applewebkit/;
     var res = {

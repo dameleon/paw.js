@@ -22,7 +22,7 @@ gulp.task('compile_with_polyfill', function() {
     console.log(files);
     gulp.src(files)
         .pipe(concat('paw.polyfill.min.js'))
-        .pipe(uglify())
+        //.pipe(uglify())
         .pipe(gulp.dest(DIST_PATH));
 });
 
@@ -38,4 +38,4 @@ gulp.task('develop', ['default'], function() {
 
 gulp.task('dist', ['jshint', 'compile', 'compile_with_polyfill']);
 
-gulp.task('default', ['tsc']);
+gulp.task('default', ['']);

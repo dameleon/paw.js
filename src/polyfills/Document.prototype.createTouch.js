@@ -10,7 +10,7 @@ if (!Document.prototype.createTouch) {
             identifier    : identifier,
             pageX         : pageX,
             pageY         : pageY,
-            radiusX       : radiusX.
+            radiusX       : radiusX,
             radiusY       : radiusY,
             rotationAngle : rotationAngle,
             screenX       : screenX,
