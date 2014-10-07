@@ -19,15 +19,15 @@ if (canUseCustomEvent) {
 } else {
     var document = global.document;
 
-    PawEvent = function(event, params) {
-        var evt = document.createEvent('Event');
+    PawEvent = function(eventType, params) {
+        var event = document.createEvent('Event');
 
         params = params || { bubbles: false, cancelable: false };
-        evt.initEvent(event, params.bubbles, params.cancelable);
+        event.initEvent(eventType, params.bubbles, params.cancelable);
         if (params.detail) {
-            evt.detail = params.detail;
+            event.detail = params.detail;
         }
-        return evt;
+        return event;
     };
     PawEvent.prototype = global.Event.prototype;
 }
