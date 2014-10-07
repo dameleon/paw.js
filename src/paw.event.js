@@ -6,8 +6,15 @@ if (!global.Paw) {
 }
 var Paw = global.Paw;
 var PawEvent;
+var canUseCustomEvent = true;
 
-if (global.CustomEvent) {
+try {
+    new global.CustomEvent('testevent');
+} catch(_) {
+    canUseCustomEvent = false;
+}
+
+if (canUseCustomEvent) {
     PawEvent = global.CustomEvent;
 } else {
     var document = global.document;
