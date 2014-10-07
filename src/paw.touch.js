@@ -119,14 +119,18 @@ function _timeout() {
 }
 
 function _triggerEvent(type, x, y) {
-    var event = Paw.createTouchEvent(
-            type,
-            this.target,
-            EVENT_INIT_DICT.BUBBLES,
-            EVENT_INIT_DICT.CANCELABLE,
-            x,
-            y,
-            this.id
+    var detail = {
+        identifier: this.id,
+        pageX: x,
+        pageY: y
+    };
+    var event = new Paw.Event(
+        type,
+        {
+            bubbles: EVENT_INIT_DICT.BUBBLES,
+            cancelable: EVENT_INIT_DICT.CANCELABLE,
+            detail: detail
+        }
     );
 
     this.target.dispatchEvent(event);
