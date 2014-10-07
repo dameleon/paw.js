@@ -27,8 +27,8 @@ function PawTouch(id, touchInfo, setting) {
     this.setting = setting;
     this.target = touchInfo.target;
     this.lastTouchInfo = touchInfo;
-    this.startX = this.lastX = touchInfo.pageX;
-    this.startY = this.lastY = touchInfo.pageY;
+    this.startX = touchInfo.pageX;
+    this.startY = touchInfo.pageY;
     this.disposeTimer = null;
     if (setting.preventClickEvent) {
         this.target.addEventListener(EVENT_TYPES.CLICK, this);
