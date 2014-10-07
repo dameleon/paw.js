@@ -166,7 +166,7 @@ function _disposeTarget() {
         if (this.setting.preventClickEvent) {
             target.removeEventListener(EVENT_TYPES.CLICK, this);
         }
-        target = null;
+        this.arget = null;
     }
 }
 
