@@ -16,7 +16,7 @@ if (global.CustomEvent) {
         var evt = document.createEvent('Event');
 
         params = params || { bubbles: false, cancelable: false };
-        evt.init(event, params.bubbles, params.cancelable);
+        evt.initEvent(event, params.bubbles, params.cancelable);
         if (params.detail) {
             evt.detail = params.detail;
         }

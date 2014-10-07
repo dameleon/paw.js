@@ -19,7 +19,6 @@ gulp.task('compile_with_polyfill', function() {
     var files = [].slice.call(SRC_LIST);
 
     files.unshift('src/polyfills/*.js');
-    console.log(files);
     gulp.src(files)
         .pipe(concat('paw.polyfill.min.js'))
         .pipe(uglify())
@@ -38,4 +37,4 @@ gulp.task('develop', ['default'], function() {
 
 gulp.task('dist', ['jshint', 'compile', 'compile_with_polyfill']);
 
-gulp.task('default', ['']);
+gulp.task('default', ['dist']);
