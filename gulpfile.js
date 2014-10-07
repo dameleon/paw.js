@@ -1,17 +1,22 @@
+var pkg = require('./package.json');
 var gulp = require('gulp');
-var tsc = require('gulp-tsc');
 var uglify = require('gulp-uglify');
 var jshint = require('gulp-jshint');
 var concat = require('gulp-concat');
 var stylish = require('jshint-stylish');
+var header = require('gulp-header');
 
 var DIST_PATH = 'dist/'
 var SRC_LIST = ['src/**/paw.js', 'src/*.js'];
+var banner = '/*! <%= pkg.name %> // @version <%= pkg.version %>, @license <%= pkg.license %>, @author <%= pkg.author %> */\n';
 
 gulp.task('compile', function() {
     gulp.src(SRC_LIST)
         .pipe(concat('paw.min.js'))
-        .pipe(uglify())
+        .pipe(uglify({
+            preserveComments: 'some'
+        }))
+         .pipe(header(banner, { pkg: pkg }))
         .pipe(gulp.dest(DIST_PATH));
 });
 
@@ -21,7 +26,10 @@ gulp.task('compile_with_polyfill', function() {
     files.unshift('src/polyfills/*.js');
     gulp.src(files)
         .pipe(concat('paw.polyfill.min.js'))
-        .pipe(uglify())
+        .pipe(uglify({
+            preserveComments: 'some'
+        }))
+         .pipe(header(banner, { pkg: pkg }))
         .pipe(gulp.dest(DIST_PATH));
 });
 
