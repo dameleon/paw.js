@@ -67,17 +67,21 @@ function _end(touchInfo) {
     var isDoubleTap, pos;
 
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
-        pos = this.target.compareDocumentPosition(touchInfo.target);
-        // NOTE: replace target to the current target in the case of descendants or ancestors
-        if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-            this.replaceTarget(touchInfo.target);
+        if (this.target !== touchInfo.target) {
+            pos = this.target.compareDocumentPosition(touchInfo.target);
+            // NOTE: replace target to the current target in the case of descendants or ancestors
+            if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
+                this.replaceTarget(touchInfo.target);
+            }
+            // NOTE: not processed in the case of sibling elements
+            else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
+                return this.dispose();
+            }
         }
-        // NOTE: not processed in the case of sibling elements
-        else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
-            return this.dispose();
+        this.triggerEvent(EVENT_TYPES.TAP, x, y);
+        if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
+            this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, x, y);
         }
-        isDoubleTap = __isDoubleTap(this.target, setting.doubleTapDuration);
-        this.triggerEvent(isDoubleTap && EVENT_TYPES.DOUBLE_TAP || EVENT_TYPES.TAP, x, y);
         __updateLastTapTarget(this.target);
     }
     this.dispose();
@@ -104,14 +108,16 @@ function _timeout() {
     var pos;
 
     if (__sqrt(dx * dx + dy * dy) <= this.setting.motionThreshold) {
-        pos = this.target.compareDocumentPosition(touchInfo.target);
-        // NOTE: replace target to the current target in the case of descendants or ancestors
-        if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-            this.replaceTarget(touchInfo.target);
-        }
-        // NOTE: not processed in the case of sibling elements
-        else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
-            return this.dispose();
+        if (this.target !== touchInfo.target) {
+            pos = this.target.compareDocumentPosition(touchInfo.target);
+            // NOTE: replace target to the current target in the case of descendants or ancestors
+            if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
+                this.replaceTarget(touchInfo.target);
+            }
+            // NOTE: not processed in the case of sibling elements
+            else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
+                return this.dispose();
+            }
         }
         this.triggerEvent(EVENT_TYPES.PRESS, x, y);
     }
