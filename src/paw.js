@@ -203,13 +203,12 @@ function _unbindEvents() {
 
 function _dispose(cond) {
     var handlers = this.handlers;
-    var rootNode = this.rootNode;
 
     for (var id in handlers) {
         delete handlers[id];
         this.clearTimer(id);
     }
-    rootNode.removeEventListener(EVENTS.START);
+    this.rootNode.removeEventListener(EVENTS.START);
     this.unbindEvents();
     if (cond) {
         Paw.Touch.dispose();
