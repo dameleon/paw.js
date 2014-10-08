@@ -6,73 +6,55 @@ if (!global.Paw) {
 }
 var Paw = global.Paw;
 var document = global.document;
-var canCreateEventByConstructor = true;
-var PawEvent, PawMouseEvent;
+var canCreateEvent = true;
 
-// PawEvent
+// check useragent can use custom event
 try {
-    new global.CustomEvent('testevent');
+    document.createEvent('CustomEvent');
 } catch (_) {
-    canCreateEventByConstructor = false;
+    canCreateEvent = false;
 }
 
-if (canCreateEventByConstructor) {
-    PawEvent = global.CustomEvent;
+if (canCreateEvent) {
+    Paw.Event = function(eventType, canBubble, cancelable, detail) {
+        var event = document.createEvent('CustomEvent');
+
+        event.initEvent(eventType, canBubble, cancelable, detail);
+        return event;
+    };
 } else {
-    PawEvent = function(eventType, params) {
+    Paw.Event = function(eventType, canBubble, cancelable, detail) {
         var event = document.createEvent('Event');
 
-        params = params || { bubbles: true, cancelable: true };
-        event.initEvent(eventType, params.bubbles, params.cancelable);
-        if (params.detail) {
-            event.detail = params.detail;
+        event.initEvent(eventType, canBubble, cancelable);
+        if (detail) {
+            event.detail = detail;
         }
         return event;
     };
-    PawEvent.prototype = global.Event.prototype;
 }
 
-// PawMouseEvent
-canCreateEventByConstructor = true;
-
-try {
-    new global.MouseEvent('testevent');
-} catch (_) {
-    canCreateEventByConstructor = false;
-}
-
-if (canCreateEventByConstructor) {
-    PawMouseEvent = global.MouseEvent;
-} else {
-    PawMouseEvent = function(eventType, params) {
+Paw.MouseEvent = function(eventType, canBubble, cancelable, view,  detail, screenX, screenY, clientX, clientY,  ctrlKey, altKey, shiftKey, metaKey,  button, relatedTarget) {
         var event = document.createEvent('MouseEvent');
 
-        params = params || { bubbles: true, cancelable: true };
         event.initMouseEvent(
             eventType,
-            params.bubbles,
-            params.cancelable,
-            params.view || global,
-            params.detail,
-            params.screenX,
-            params.screenY,
-            params.clientX,
-            params.clientY,
-            params.ctrlKey,
-            params.altKey,
-            params.shiftKey,
-            params.metaKey,
-            params.button,
-            params.relatedTarget
+            canBubble,
+            cancelable,
+            view,
+            detail,
+            screenX,
+            screenY,
+            clientX,
+            clientY,
+            ctrlKey,
+            altKey,
+            shiftKey,
+            metaKey,
+            button,
+            relatedTarget
         );
         return event;
-    };
-    PawMouseEvent.prototype = global.MouseEvent.prototype;
-}
-
-
-// export
-Paw.Event = PawEvent;
-Paw.MouseEvent = PawMouseEvent;
+};
 
 })(this.self || global, void 0);

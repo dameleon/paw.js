@@ -138,31 +138,34 @@ function _triggerEvent(type, touchInfo) {
         screenX    : touchInfo.screenX,
         screenY    : touchInfo.screenY
     };
-    var event = new Paw.Event(
+    var event = Paw.Event(
         type,
-        {
-            bubbles: EVENT_INIT_DICT.BUBBLES,
-            cancelable: EVENT_INIT_DICT.CANCELABLE,
-            detail: detail
-        }
+        EVENT_INIT_DICT.BUBBLES,
+        EVENT_INIT_DICT.CANCELABLE,
+        detail
     );
 
     this.target.dispatchEvent(event);
 }
 
 function _triggerMouseEvent(type, touchInfo) {
-    var event = new Paw.MouseEvent(type, {
-        bubbles    : EVENT_INIT_DICT.BUBBLES,
-        cancelable : EVENT_INIT_DICT.CANCELABLE,
-        button     : 1, //this.id,
-        detail     : 1,
-        pageX      : touchInfo.pageX,
-        pageY      : touchInfo.pageY,
-        clientX    : touchInfo.clientX,
-        clientY    : touchInfo.clientY,
-        screenX    : touchInfo.screenX,
-        screenY    : touchInfo.screenY
-    });
+    var event = Paw.MouseEvent(
+            type,                       // eventType,
+            EVENT_INIT_DICT.BUBBLES,    // canBubble,
+            EVENT_INIT_DICT.CANCELABLE, // cancelable,
+            this.setting.view,          // view,
+            this.id,                    // detail,
+            touchInfo.screenX,          // screenX,
+            touchInfo.screenY,          // screenY,
+            touchInfo.clientX,          // clientX,
+            touchInfo.clientY,          // clientY,
+            false,                      // ctrlKey,
+            false,                      // altKey,
+            false,                      // shiftKey,
+            false,                      // metaKey,
+            this.id,                    // button,
+            null                        // relatedTarget
+    );
 
     this.target.dispatchEvent(event);
 }
