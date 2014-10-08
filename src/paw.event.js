@@ -47,9 +47,9 @@ if (canCreateEventByConstructor) {
     PawMouseEvent = function(eventType, params) {
         var event = document.createEvent('MouseEvent');
 
-        params = params || { bubbles: true, cancelable: true }
+        params = params || { bubbles: true, cancelable: true };
         event.initMouseEvent(
-            type,
+            eventType,
             params.bubbles,
             params.cancelable,
             params.view || global,

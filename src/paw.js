@@ -24,13 +24,15 @@ function Paw(rootNode, option) {
     }
     var setting = this.setting = {};
 
+    rootNode = rootNode || document;
     if (!option) {
         option = {};
     }
     for (var key in defaultSetting) {
         setting[key] = (option[key] !== undefined) ? option[key] : defaultSetting[key];
     }
-    this.rootNode = rootNode || document;
+    setting.view = rootNode.defaultView || rootNode.ownerDocument && rootNode.ownerDocument.defaultView || global;
+    this.rootNode = rootNode;
     this.rootNode.addEventListener(EVENTS.START, this);
     this.handlers = {};
     this.timers = {};

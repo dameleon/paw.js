@@ -32,7 +32,7 @@ function PawTouch(id, touchInfo, setting) {
     this.disposeTimer = null;
     this.clicked = false;
     if (setting.fastClick) {
-        this.target.addEventListener(EVENT_TYPES.CLICK, this);
+        setting.view.addEventListener(EVENT_TYPES.CLICK, this, true);
     }
 }
 
@@ -46,14 +46,13 @@ PawTouch.prototype = {
     constructor       : PawTouch,
     cancel            : _dispose,
     dispose           : _dispose,
-    disposeTarget     : _disposeTarget
     end               : _end,
     handleEvent       : _handleEvent,
     move              : _move,
-    replaceTarget     : _replaceTarget,
     timeout           : _timeout,
     triggerEvent      : _triggerEvent,
     triggerMouseEvent : _triggerMouseEvent,
+    unbindClickEvent  : _unbindClickEvent
 };
 
 function _move(touchInfo) {
@@ -66,14 +65,14 @@ function _end(touchInfo) {
     var y = touchInfo.pageY;
     var dx = x - this.startX;
     var dy = y - this.startY;
-    var isDoubleTap, pos;
+    var pos;
 
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
         if (this.target !== touchInfo.target) {
             pos = this.target.compareDocumentPosition(touchInfo.target);
             // NOTE: replace target to the current target in the case of descendants or ancestors
             if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-                this.replaceTarget(touchInfo.target);
+                this.target = touchInfo.target;
             }
             // NOTE: not processed in the case of sibling elements
             else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
@@ -97,10 +96,10 @@ function _dispose() {
 
     if (this.setting.fastClick) {
         this.disposeTimer = global.setTimeout(function() {
-            that.disposeTarget();
+            that.unbindClickEvent();
         }, 400);
     } else {
-        this.disposeTarget();
+        this.unbindClickEvent();
     }
 }
 
@@ -117,7 +116,7 @@ function _timeout() {
             pos = this.target.compareDocumentPosition(touchInfo.target);
             // NOTE: replace target to the current target in the case of descendants or ancestors
             if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-                this.replaceTarget(touchInfo.target);
+                this.target = touchInfo.target;
             }
             // NOTE: not processed in the case of sibling elements
             else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
@@ -155,7 +154,7 @@ function _triggerMouseEvent(type, touchInfo) {
     var event = new Paw.MouseEvent(type, {
         bubbles    : EVENT_INIT_DICT.BUBBLES,
         cancelable : EVENT_INIT_DICT.CANCELABLE,
-        button     : this.id,
+        button     : 1, //this.id,
         detail     : 1,
         pageX      : touchInfo.pageX,
         pageY      : touchInfo.pageY,
@@ -169,35 +168,21 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
-    if (this.clicked) {
+    if (this.target !== ev.target) {
+        return;
+    } else if (this.clicked) {
         ev.preventDefault();
+        ev.stopImmediatePropagation();
         ev.stopPropagation();
         global.clearTimeout(this.disposeTimer);
-        this.disposeTarget();
+        this.unbindClickEvent();
         return false;
     }
     this.clicked = true;
 }
 
-function _replaceTarget(target) {
-    var oldTarget = this.target;
-
-    this.target = target;
-    if (this.setting.fastClick) {
-        oldTarget.removeEventListener(EVENT_TYPES.CLICK, this);
-        this.target.addEventListener(EVENT_TYPES.CLICK, this);
-    }
-}
-
-function _disposeTarget() {
-    var target = this.target;
-
-    if (target) {
-        if (this.setting.fastClick) {
-            target.removeEventListener(EVENT_TYPES.CLICK, this);
-        }
-        this.target = null;
-    }
+function _unbindClickEvent() {
+    this.setting.view.removeEventListener(EVENT_TYPES.CLICK, this);
 }
 
 //// private methods
