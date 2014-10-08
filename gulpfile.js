@@ -33,7 +33,7 @@ gulp.task('compile_with_polyfill', function() {
 
     // Not minified
     gulp.src(files)
-        .pipe(concat('paw.polyfill.min.js'))
+        .pipe(concat('paw.polyfill.js'))
         .pipe(header(banner, { pkg: pkg }))
         .pipe(gulp.dest(DIST_PATH));
 
