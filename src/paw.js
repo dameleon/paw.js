@@ -14,7 +14,7 @@ var defaultSetting = {
         pressDuration: 500,
         doubleTapDuration: 400,
         motionThreshold: 5,
-        preventClickEvent: true
+        fastClick: true
 };
 var identifierKey = IS_SUPPORT_TOUCH_EVENT && 'identifier' || IS_SUPPORT_POINTER_EVENT && 'pointerId' || 'button';
 

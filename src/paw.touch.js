@@ -30,7 +30,8 @@ function PawTouch(id, touchInfo, setting) {
     this.startX = touchInfo.pageX;
     this.startY = touchInfo.pageY;
     this.disposeTimer = null;
-    if (setting.preventClickEvent) {
+    this.clicked = false;
+    if (setting.fastClick) {
         this.target.addEventListener(EVENT_TYPES.CLICK, this);
     }
 }
@@ -42,16 +43,17 @@ PawTouch.dispose = function() {
 };
 
 PawTouch.prototype = {
-    constructor: PawTouch,
-    move: _move,
-    end: _end,
-    timeout: _timeout,
-    cancel: _dispose,
-    dispose: _dispose,
-    triggerEvent: _triggerEvent,
-    handleEvent: _handleEvent,
-    replaceTarget: _replaceTarget,
-    disposeTarget: _disposeTarget
+    constructor       : PawTouch,
+    cancel            : _dispose,
+    dispose           : _dispose,
+    disposeTarget     : _disposeTarget
+    end               : _end,
+    handleEvent       : _handleEvent,
+    move              : _move,
+    replaceTarget     : _replaceTarget,
+    timeout           : _timeout,
+    triggerEvent      : _triggerEvent,
+    triggerMouseEvent : _triggerMouseEvent,
 };
 
 function _move(touchInfo) {
@@ -78,9 +80,12 @@ function _end(touchInfo) {
                 return this.dispose();
             }
         }
-        this.triggerEvent(EVENT_TYPES.TAP, x, y);
+        this.triggerEvent(EVENT_TYPES.TAP, touchInfo);
+        if (setting.fastClick) {
+            this.triggerMouseEvent(EVENT_TYPES.CLICK, touchInfo);
+        }
         if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
-            this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, x, y);
+            this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
         }
         __updateLastTapTarget(this.target);
     }
@@ -90,7 +95,7 @@ function _end(touchInfo) {
 function _dispose() {
     var that = this;
 
-    if (this.setting.preventClickEvent) {
+    if (this.setting.fastClick) {
         this.disposeTimer = global.setTimeout(function() {
             that.disposeTarget();
         }, 400);
@@ -119,16 +124,20 @@ function _timeout() {
                 return this.dispose();
             }
         }
-        this.triggerEvent(EVENT_TYPES.PRESS, x, y);
+        this.triggerEvent(EVENT_TYPES.PRESS, touchInfo);
     }
     this.dispose();
 }
 
-function _triggerEvent(type, x, y) {
+function _triggerEvent(type, touchInfo) {
     var detail = {
-        identifier: this.id,
-        pageX: x,
-        pageY: y
+        identifier : this.id,
+        pageX      : touchInfo.pageX,
+        pageY      : touchInfo.pageY,
+        clientX    : touchInfo.clientX,
+        clientY    : touchInfo.clientY,
+        screenX    : touchInfo.screenX,
+        screenY    : touchInfo.screenY
     };
     var event = new Paw.Event(
         type,
@@ -142,18 +151,39 @@ function _triggerEvent(type, x, y) {
     this.target.dispatchEvent(event);
 }
 
+function _triggerMouseEvent(type, touchInfo) {
+    var event = new Paw.MouseEvent(type, {
+        bubbles    : EVENT_INIT_DICT.BUBBLES,
+        cancelable : EVENT_INIT_DICT.CANCELABLE,
+        button     : this.id,
+        detail     : 1,
+        pageX      : touchInfo.pageX,
+        pageY      : touchInfo.pageY,
+        clientX    : touchInfo.clientX,
+        clientY    : touchInfo.clientY,
+        screenX    : touchInfo.screenX,
+        screenY    : touchInfo.screenY
+    });
+
+    this.target.dispatchEvent(event);
+}
+
 function _handleEvent(ev) {
-    ev.preventDefault();
-    global.clearTimeout(this.disposeTimer);
-    this.disposeTarget();
-    return false;
+    if (this.clicked) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        global.clearTimeout(this.disposeTimer);
+        this.disposeTarget();
+        return false;
+    }
+    this.clicked = true;
 }
 
 function _replaceTarget(target) {
     var oldTarget = this.target;
 
     this.target = target;
-    if (this.setting.preventClickEvent) {
+    if (this.setting.fastClick) {
         oldTarget.removeEventListener(EVENT_TYPES.CLICK, this);
         this.target.addEventListener(EVENT_TYPES.CLICK, this);
     }
@@ -163,7 +193,7 @@ function _disposeTarget() {
     var target = this.target;
 
     if (target) {
-        if (this.setting.preventClickEvent) {
+        if (this.setting.fastClick) {
             target.removeEventListener(EVENT_TYPES.CLICK, this);
         }
         this.target = null;
