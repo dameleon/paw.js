@@ -11,6 +11,13 @@ var SRC_LIST = ['src/**/paw.js', 'src/*.js'];
 var banner = '/*! <%= pkg.name %> // @version <%= pkg.version %>, @license <%= pkg.license %>, @author <%= pkg.author %> */\n';
 
 gulp.task('compile', function() {
+    // Not minified
+    gulp.src(SRC_LIST)
+        .pipe(concat('paw.js'))
+        .pipe(header(banner, { pkg: pkg }))
+        .pipe(gulp.dest(DIST_PATH));
+
+    // Minified
     gulp.src(SRC_LIST)
         .pipe(concat('paw.min.js'))
         .pipe(uglify({
@@ -22,14 +29,21 @@ gulp.task('compile', function() {
 
 gulp.task('compile_with_polyfill', function() {
     var files = [].slice.call(SRC_LIST);
-
     files.unshift('src/polyfills/*.js');
+
+    // Not minified
+    gulp.src(files)
+        .pipe(concat('paw.polyfill.min.js'))
+        .pipe(header(banner, { pkg: pkg }))
+        .pipe(gulp.dest(DIST_PATH));
+
+    // Minified
     gulp.src(files)
         .pipe(concat('paw.polyfill.min.js'))
         .pipe(uglify({
             preserveComments: 'some'
         }))
-         .pipe(header(banner, { pkg: pkg }))
+        .pipe(header(banner, { pkg: pkg }))
         .pipe(gulp.dest(DIST_PATH));
 });
 
