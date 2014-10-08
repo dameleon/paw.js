@@ -23,27 +23,22 @@ gulp.task('compile', function() {
         .pipe(uglify({
             preserveComments: 'some'
         }))
-         .pipe(header(banner, { pkg: pkg }))
+        .pipe(header(banner, { pkg: pkg }))
         .pipe(gulp.dest(DIST_PATH));
 });
 
-gulp.task('compile_with_polyfill', function() {
-    var files = [].slice.call(SRC_LIST);
-    files.unshift('src/polyfills/*.js');
-
+gulp.task('compile_with_polyfill', ['compile'], function() {
     // Not minified
-    gulp.src(files)
+    gulp.src(['src/polyfills/*.js', 'dist/paw.js'])
         .pipe(concat('paw.polyfill.js'))
-        .pipe(header(banner, { pkg: pkg }))
         .pipe(gulp.dest(DIST_PATH));
 
     // Minified
-    gulp.src(files)
-        .pipe(concat('paw.polyfill.min.js'))
+    gulp.src(['src/polyfills/*.js', 'dist/paw.min.js'])
         .pipe(uglify({
             preserveComments: 'some'
         }))
-        .pipe(header(banner, { pkg: pkg }))
+        .pipe(concat('paw.polyfill.min.js'))
         .pipe(gulp.dest(DIST_PATH));
 });
 

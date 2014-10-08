@@ -4,7 +4,9 @@
 <meta name="viewport" content="initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
 <meta charset="UTF-8">
 <title>moge</title>
-<script src="../dist/paw.polyfill.min.js"></script>
+<script src="../src/paw.js"></script>
+<script src="../src/paw.event.js"></script>
+<script src="../src/paw.touch.js"></script>
 <style>
 html, body, div, ul, li {
     margin: 0;
@@ -104,10 +106,20 @@ document.addEventListener('DOMContentLoaded', function() {
     itemList.forEach(function(item) {
         item.addEventListener('tap', _onTapItem);
     });
+    itemList.forEach(function(item) {
+        item.addEventListener('click', _onClickItem);
+    });
     innerBtnList.forEach(function(innerBtn) {
         innerBtn.addEventListener('tap', _onTapInnerBtn);
     });
 
+    function _onClickItem(ev) {
+        console.log('click item', ev);
+        alert(1);
+    }
+    function _onClickItem2(ev) {
+        console.log('click item2', ev);
+    }
     function _onTapItem(ev) {
         console.log('item', ev);
     }

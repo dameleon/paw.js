@@ -14,7 +14,7 @@ var defaultSetting = {
         pressDuration: 500,
         doubleTapDuration: 400,
         motionThreshold: 5,
-        preventClickEvent: true
+        fastClick: true
 };
 var identifierKey = IS_SUPPORT_TOUCH_EVENT && 'identifier' || IS_SUPPORT_POINTER_EVENT && 'pointerId' || 'button';
 
@@ -24,13 +24,15 @@ function Paw(rootNode, option) {
     }
     var setting = this.setting = {};
 
+    rootNode = rootNode || document;
     if (!option) {
         option = {};
     }
     for (var key in defaultSetting) {
         setting[key] = (option[key] !== undefined) ? option[key] : defaultSetting[key];
     }
-    this.rootNode = rootNode || document;
+    setting.view = rootNode.defaultView || rootNode.ownerDocument && rootNode.ownerDocument.defaultView || global;
+    this.rootNode = rootNode;
     this.rootNode.addEventListener(EVENTS.START, this);
     this.handlers = {};
     this.timers = {};
@@ -203,13 +205,12 @@ function _unbindEvents() {
 
 function _dispose(cond) {
     var handlers = this.handlers;
-    var rootNode = this.rootNode;
 
     for (var id in handlers) {
         delete handlers[id];
         this.clearTimer(id);
     }
-    rootNode.removeEventListener(EVENTS.START);
+    this.rootNode.removeEventListener(EVENTS.START);
     this.unbindEvents();
     if (cond) {
         Paw.Touch.dispose();

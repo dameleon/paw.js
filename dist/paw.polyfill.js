@@ -1,4 +1,10 @@
-/*! paw.js // @version 1.0.0, @license MIT, @author dameleon <dameleon@gmail.com> */
+//! Event.prototype.stopImmediatePropagation Polyfill
+if (!Event.prototype.stopImmediatePropagation) {
+    Event.prototype.stopImmediatePropagation = function() {
+        this.cancelBubble = true;
+    };
+}
+
 //! Object.keys Polyfill from [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys#Polyfill)
 if (!Object.keys) {
   Object.keys = (function() {
@@ -41,6 +47,7 @@ if (!Object.keys) {
   }());
 }
 
+/*! paw.js // @version 1.0.0, @license MIT, @author dameleon <dameleon@gmail.com> */
 ;(function(global, undefined) {
 'use strict';
 
@@ -57,7 +64,7 @@ var defaultSetting = {
         pressDuration: 500,
         doubleTapDuration: 400,
         motionThreshold: 5,
-        preventClickEvent: true
+        fastClick: true
 };
 var identifierKey = IS_SUPPORT_TOUCH_EVENT && 'identifier' || IS_SUPPORT_POINTER_EVENT && 'pointerId' || 'button';
 
@@ -67,13 +74,15 @@ function Paw(rootNode, option) {
     }
     var setting = this.setting = {};
 
+    rootNode = rootNode || document;
     if (!option) {
         option = {};
     }
     for (var key in defaultSetting) {
         setting[key] = (option[key] !== undefined) ? option[key] : defaultSetting[key];
     }
-    this.rootNode = rootNode || document;
+    setting.view = rootNode.defaultView || rootNode.ownerDocument && rootNode.ownerDocument.defaultView || global;
+    this.rootNode = rootNode;
     this.rootNode.addEventListener(EVENTS.START, this);
     this.handlers = {};
     this.timers = {};
@@ -246,13 +255,12 @@ function _unbindEvents() {
 
 function _dispose(cond) {
     var handlers = this.handlers;
-    var rootNode = this.rootNode;
 
     for (var id in handlers) {
         delete handlers[id];
         this.clearTimer(id);
     }
-    rootNode.removeEventListener(EVENTS.START);
+    this.rootNode.removeEventListener(EVENTS.START);
     this.unbindEvents();
     if (cond) {
         Paw.Touch.dispose();
@@ -276,35 +284,57 @@ if (!global.Paw) {
     throw new Error('"Paw" does not exist in global');
 }
 var Paw = global.Paw;
-var PawEvent;
-var canUseCustomEvent = true;
+var document = global.document;
+var canCreateEvent = true;
 
+// check useragent can use custom event
 try {
-    new global.CustomEvent('testevent');
-} catch(_) {
-    canUseCustomEvent = false;
+    document.createEvent('CustomEvent');
+} catch (_) {
+    canCreateEvent = false;
 }
 
-if (canUseCustomEvent) {
-    PawEvent = global.CustomEvent;
-} else {
-    var document = global.document;
+if (canCreateEvent) {
+    Paw.Event = function(eventType, canBubble, cancelable, detail) {
+        var event = document.createEvent('CustomEvent');
 
-    PawEvent = function(event, params) {
-        var evt = document.createEvent('Event');
-
-        params = params || { bubbles: false, cancelable: false };
-        evt.initEvent(event, params.bubbles, params.cancelable);
-        if (params.detail) {
-            evt.detail = params.detail;
-        }
-        return evt;
+        event.initEvent(eventType, canBubble, cancelable, detail);
+        return event;
     };
-    PawEvent.prototype = global.Event.prototype;
+} else {
+    Paw.Event = function(eventType, canBubble, cancelable, detail) {
+        var event = document.createEvent('Event');
+
+        event.initEvent(eventType, canBubble, cancelable);
+        if (detail) {
+            event.detail = detail;
+        }
+        return event;
+    };
 }
 
-// export
-Paw.Event = PawEvent;
+Paw.MouseEvent = function(eventType, canBubble, cancelable, view,  detail, screenX, screenY, clientX, clientY,  ctrlKey, altKey, shiftKey, metaKey,  button, relatedTarget) {
+        var event = document.createEvent('MouseEvent');
+
+        event.initMouseEvent(
+            eventType,
+            canBubble,
+            cancelable,
+            view,
+            detail,
+            screenX,
+            screenY,
+            clientX,
+            clientY,
+            ctrlKey,
+            altKey,
+            shiftKey,
+            metaKey,
+            button,
+            relatedTarget
+        );
+        return event;
+};
 
 })(this.self || global, void 0);
 
@@ -340,8 +370,9 @@ function PawTouch(id, touchInfo, setting) {
     this.startX = touchInfo.pageX;
     this.startY = touchInfo.pageY;
     this.disposeTimer = null;
-    if (setting.preventClickEvent) {
-        this.target.addEventListener(EVENT_TYPES.CLICK, this);
+    this.clicked = false;
+    if (setting.fastClick) {
+        setting.view.addEventListener(EVENT_TYPES.CLICK, this, true);
     }
 }
 
@@ -352,16 +383,16 @@ PawTouch.dispose = function() {
 };
 
 PawTouch.prototype = {
-    constructor: PawTouch,
-    move: _move,
-    end: _end,
-    timeout: _timeout,
-    cancel: _dispose,
-    dispose: _dispose,
-    triggerEvent: _triggerEvent,
-    handleEvent: _handleEvent,
-    replaceTarget: _replaceTarget,
-    disposeTarget: _disposeTarget
+    constructor       : PawTouch,
+    cancel            : _dispose,
+    dispose           : _dispose,
+    end               : _end,
+    handleEvent       : _handleEvent,
+    move              : _move,
+    timeout           : _timeout,
+    triggerEvent      : _triggerEvent,
+    triggerMouseEvent : _triggerMouseEvent,
+    unbindClickEvent  : _unbindClickEvent
 };
 
 function _move(touchInfo) {
@@ -374,20 +405,27 @@ function _end(touchInfo) {
     var y = touchInfo.pageY;
     var dx = x - this.startX;
     var dy = y - this.startY;
-    var isDoubleTap, pos;
+    var pos;
 
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
-        pos = this.target.compareDocumentPosition(touchInfo.target);
-        // NOTE: replace target to the current target in the case of descendants or ancestors
-        if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-            this.replaceTarget(touchInfo.target);
+        if (this.target !== touchInfo.target) {
+            pos = this.target.compareDocumentPosition(touchInfo.target);
+            // NOTE: replace target to the current target in the case of descendants or ancestors
+            if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
+                this.target = touchInfo.target;
+            }
+            // NOTE: not processed in the case of sibling elements
+            else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
+                return this.dispose();
+            }
         }
-        // NOTE: not processed in the case of sibling elements
-        else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
-            return this.dispose();
+        this.triggerEvent(EVENT_TYPES.TAP, touchInfo);
+        if (setting.fastClick) {
+            this.triggerMouseEvent(EVENT_TYPES.CLICK, touchInfo);
         }
-        isDoubleTap = __isDoubleTap(this.target, setting.doubleTapDuration);
-        this.triggerEvent(isDoubleTap && EVENT_TYPES.DOUBLE_TAP || EVENT_TYPES.TAP, x, y);
+        if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
+            this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
+        }
         __updateLastTapTarget(this.target);
     }
     this.dispose();
@@ -396,12 +434,12 @@ function _end(touchInfo) {
 function _dispose() {
     var that = this;
 
-    if (this.setting.preventClickEvent) {
+    if (this.setting.fastClick) {
         this.disposeTimer = global.setTimeout(function() {
-            that.disposeTarget();
+            that.unbindClickEvent();
         }, 400);
     } else {
-        this.disposeTarget();
+        this.unbindClickEvent();
     }
 }
 
@@ -414,64 +452,80 @@ function _timeout() {
     var pos;
 
     if (__sqrt(dx * dx + dy * dy) <= this.setting.motionThreshold) {
-        pos = this.target.compareDocumentPosition(touchInfo.target);
-        // NOTE: replace target to the current target in the case of descendants or ancestors
-        if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
-            this.replaceTarget(touchInfo.target);
+        if (this.target !== touchInfo.target) {
+            pos = this.target.compareDocumentPosition(touchInfo.target);
+            // NOTE: replace target to the current target in the case of descendants or ancestors
+            if (pos === DOCUMENT_POSITION_ANCESTOR || pos === DOCUMENT_POSITION_DESCENDANT) {
+                this.target = touchInfo.target;
+            }
+            // NOTE: not processed in the case of sibling elements
+            else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
+                return this.dispose();
+            }
         }
-        // NOTE: not processed in the case of sibling elements
-        else if (pos !== DOCUMENT_POSITION_IDENTICAL) {
-            return this.dispose();
-        }
-        this.triggerEvent(EVENT_TYPES.PRESS, x, y);
+        this.triggerEvent(EVENT_TYPES.PRESS, touchInfo);
     }
     this.dispose();
 }
 
-function _triggerEvent(type, x, y) {
+function _triggerEvent(type, touchInfo) {
     var detail = {
-        identifier: this.id,
-        pageX: x,
-        pageY: y
+        identifier : this.id,
+        pageX      : touchInfo.pageX,
+        pageY      : touchInfo.pageY,
+        clientX    : touchInfo.clientX,
+        clientY    : touchInfo.clientY,
+        screenX    : touchInfo.screenX,
+        screenY    : touchInfo.screenY
     };
-    var event = new Paw.Event(
+    var event = Paw.Event(
         type,
-        {
-            bubbles: EVENT_INIT_DICT.BUBBLES,
-            cancelable: EVENT_INIT_DICT.CANCELABLE,
-            detail: detail
-        }
+        EVENT_INIT_DICT.BUBBLES,
+        EVENT_INIT_DICT.CANCELABLE,
+        detail
+    );
+
+    this.target.dispatchEvent(event);
+}
+
+function _triggerMouseEvent(type, touchInfo) {
+    var event = Paw.MouseEvent(
+            type,                       // eventType,
+            EVENT_INIT_DICT.BUBBLES,    // canBubble,
+            EVENT_INIT_DICT.CANCELABLE, // cancelable,
+            this.setting.view,          // view,
+            this.id,                    // detail,
+            touchInfo.screenX,          // screenX,
+            touchInfo.screenY,          // screenY,
+            touchInfo.clientX,          // clientX,
+            touchInfo.clientY,          // clientY,
+            false,                      // ctrlKey,
+            false,                      // altKey,
+            false,                      // shiftKey,
+            false,                      // metaKey,
+            this.id,                    // button,
+            null                        // relatedTarget
     );
 
     this.target.dispatchEvent(event);
 }
 
 function _handleEvent(ev) {
-    ev.preventDefault();
-    global.clearTimeout(this.disposeTimer);
-    this.disposeTarget();
-    return false;
+    if (this.target !== ev.target) {
+        return;
+    } else if (this.clicked) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        ev.stopPropagation();
+        global.clearTimeout(this.disposeTimer);
+        this.unbindClickEvent();
+        return false;
+    }
+    this.clicked = true;
 }
 
-function _replaceTarget(target) {
-    var oldTarget = this.target;
-
-    this.target = target;
-    if (this.setting.preventClickEvent) {
-        oldTarget.removeEventListener(EVENT_TYPES.CLICK, this);
-        this.target.addEventListener(EVENT_TYPES.CLICK, this);
-    }
-}
-
-function _disposeTarget() {
-    var target = this.target;
-
-    if (target) {
-        if (this.setting.preventClickEvent) {
-            target.removeEventListener(EVENT_TYPES.CLICK, this);
-        }
-        target = null;
-    }
+function _unbindClickEvent() {
+    this.setting.view.removeEventListener(EVENT_TYPES.CLICK, this, true);
 }
 
 //// private methods

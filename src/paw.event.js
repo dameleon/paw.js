@@ -5,34 +5,56 @@ if (!global.Paw) {
     throw new Error('"Paw" does not exist in global');
 }
 var Paw = global.Paw;
-var PawEvent;
-var canUseCustomEvent = true;
+var document = global.document;
+var canCreateEvent = true;
 
+// check useragent can use custom event
 try {
-    new global.CustomEvent('testevent');
-} catch(_) {
-    canUseCustomEvent = false;
+    document.createEvent('CustomEvent');
+} catch (_) {
+    canCreateEvent = false;
 }
 
-if (canUseCustomEvent) {
-    PawEvent = global.CustomEvent;
-} else {
-    var document = global.document;
+if (canCreateEvent) {
+    Paw.Event = function(eventType, canBubble, cancelable, detail) {
+        var event = document.createEvent('CustomEvent');
 
-    PawEvent = function(event, params) {
-        var evt = document.createEvent('Event');
-
-        params = params || { bubbles: false, cancelable: false };
-        evt.initEvent(event, params.bubbles, params.cancelable);
-        if (params.detail) {
-            evt.detail = params.detail;
-        }
-        return evt;
+        event.initEvent(eventType, canBubble, cancelable, detail);
+        return event;
     };
-    PawEvent.prototype = global.Event.prototype;
+} else {
+    Paw.Event = function(eventType, canBubble, cancelable, detail) {
+        var event = document.createEvent('Event');
+
+        event.initEvent(eventType, canBubble, cancelable);
+        if (detail) {
+            event.detail = detail;
+        }
+        return event;
+    };
 }
 
-// export
-Paw.Event = PawEvent;
+Paw.MouseEvent = function(eventType, canBubble, cancelable, view,  detail, screenX, screenY, clientX, clientY,  ctrlKey, altKey, shiftKey, metaKey,  button, relatedTarget) {
+        var event = document.createEvent('MouseEvent');
+
+        event.initMouseEvent(
+            eventType,
+            canBubble,
+            cancelable,
+            view,
+            detail,
+            screenX,
+            screenY,
+            clientX,
+            clientY,
+            ctrlKey,
+            altKey,
+            shiftKey,
+            metaKey,
+            button,
+            relatedTarget
+        );
+        return event;
+};
 
 })(this.self || global, void 0);
