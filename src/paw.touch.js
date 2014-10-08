@@ -171,6 +171,7 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
+    console.log((this.target !== ev.target), this.target, ev.target);
     if (this.target !== ev.target) {
         return;
     } else if (this.clicked) {
