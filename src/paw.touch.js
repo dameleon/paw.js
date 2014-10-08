@@ -171,10 +171,6 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
-    console.log((this.target !== ev.target));
-    console.log(this.target);
-    console.log(ev.target);
-    console.log(this.clicked);
     if (this.target !== ev.target) {
         return;
     } else if (this.clicked) {
@@ -189,7 +185,7 @@ function _handleEvent(ev) {
 }
 
 function _unbindClickEvent() {
-    this.setting.view.removeEventListener(EVENT_TYPES.CLICK, this);
+    this.setting.view.removeEventListener(EVENT_TYPES.CLICK, this, true);
 }
 
 //// private methods
