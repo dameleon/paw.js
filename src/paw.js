@@ -224,5 +224,11 @@ function __getTouchInfoList(ev) {
 
 // exports
 global.Paw = Paw;
+// for require.js
+if (!('process' in global) && (typeof global.define === 'function' && global.define.amd)) {
+    define([], function() {
+        return Paw;
+    });
+}
 
 })(this.self || global, void 0);
