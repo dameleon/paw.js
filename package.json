@@ -1,6 +1,6 @@
 {
   "name": "paw.js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A javascript library for generate useful touch event",
   "main": "dist/paw.min.js",
   "scripts": {

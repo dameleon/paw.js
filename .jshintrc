@@ -20,6 +20,7 @@
     "latedef"     : false,
     "validthis"   : true,
     "predef"      : [
-        "_"
+        "_",
+        "define"
     ]
 }
