@@ -67,7 +67,6 @@ function _end(touchInfo) {
     var dy = y - this.startY;
     var pos;
 
-    this.lastTouchInfo = touchInfo;
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
         if (this.target !== touchInfo.target) {
             pos = this.target.compareDocumentPosition(touchInfo.target);
@@ -174,8 +173,7 @@ function _triggerMouseEvent(type, touchInfo) {
 function _handleEvent(ev) {
     var touchInfo = this.lastTouchInfo;
 
-    // 既に1度click済みかつ同じ座標にclickイベントが飛んできた場合、2度目のclickイベントは防いでからdispose処理をする
-    if (this.clicked && (touchInfo.screenX === ev.screenX && touchInfo.screenY === ev.screenY)) {
+    if (this.clicked) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
         ev.stopPropagation();
