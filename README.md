@@ -125,6 +125,7 @@ new Paw(null, {
 **注意**
 
 - `fastClick`オプションを指定した場合、windowオブジェクトに対して`click`イベントを`useCapure: true`としてハンドラを設定した時に(例: `window.addEventListener('click', function() {...}, true)`)、イベントハンドラが1度のクリックで2度呼ばれる場合があります。
+- `fastClick`オプションを指定した場合、clickイベント発火時にそのイベントと同一のスクリーン座標に対して再びclickイベントを発火した時、そのイベントはキャンセルされる可能性があります。
 
 
 ## 対応表
@@ -283,6 +284,7 @@ new Paw(null, {
 **Notice.**
 
 - when you have enabled the `fastClick`, if you register an event handler in the state have enabled the `useCapture` option to the `window` object(e.g. `window.addEventListener('click', function() {...}, true)`) will receive twice the `click` event in a single tap.
+- when you have enabled the `fastClick`, the click event is fired, there is a possibility that the event is canceled when you fire the click event again for the same screen coordinates.
 
 
 ## Compatibility table
