@@ -171,8 +171,6 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
-    var touchInfo = this.lastTouchInfo;
-
     if (this.clicked) {
         ev.preventDefault();
         ev.stopImmediatePropagation();

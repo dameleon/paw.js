@@ -47,7 +47,7 @@ if (!Object.keys) {
   }());
 }
 
-/*! paw.js // @version 1.0.1, @license MIT, @author dameleon <dameleon@gmail.com> */
+/*! paw.js // @version 1.0.3, @license MIT, @author dameleon <dameleon@gmail.com> */
 ;(function(global, undefined) {
 'use strict';
 
@@ -500,7 +500,7 @@ function _triggerMouseEvent(type, touchInfo) {
             EVENT_INIT_DICT.BUBBLES,    // canBubble,
             EVENT_INIT_DICT.CANCELABLE, // cancelable,
             this.setting.view,          // view,
-            this.id,                    // detail,
+            1,                          // detail (always 1),
             touchInfo.screenX,          // screenX,
             touchInfo.screenY,          // screenY,
             touchInfo.clientX,          // clientX,
@@ -517,9 +517,9 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
-    if (this.target !== ev.target) {
-        return;
-    } else if (this.clicked) {
+    var touchInfo = this.lastTouchInfo;
+
+    if (this.clicked) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
         ev.stopPropagation();
