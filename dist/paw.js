@@ -1,4 +1,4 @@
-/*! paw.js // @version 1.0.1, @license MIT, @author dameleon <dameleon@gmail.com> */
+/*! paw.js // @version 1.0.2, @license MIT, @author dameleon <dameleon@gmail.com> */
 ;(function(global, undefined) {
 'use strict';
 
@@ -364,6 +364,7 @@ function _end(touchInfo) {
     var dy = y - this.startY;
     var pos;
 
+    this.lastTouchInfo = touchInfo;
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
         if (this.target !== touchInfo.target) {
             pos = this.target.compareDocumentPosition(touchInfo.target);
@@ -451,7 +452,7 @@ function _triggerMouseEvent(type, touchInfo) {
             EVENT_INIT_DICT.BUBBLES,    // canBubble,
             EVENT_INIT_DICT.CANCELABLE, // cancelable,
             this.setting.view,          // view,
-            this.id,                    // detail,
+            1,                          // detail (always 1),
             touchInfo.screenX,          // screenX,
             touchInfo.screenY,          // screenY,
             touchInfo.clientX,          // clientX,
@@ -468,9 +469,10 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
-    if (this.target !== ev.target) {
-        return;
-    } else if (this.clicked) {
+    var touchInfo = this.lastTouchInfo;
+
+    // 既に1度click済みかつ同じ座標にclickイベントが飛んできた場合、2度目のclickイベントは防いでからdispose処理をする
+    if (this.clicked && (touchInfo.screenX === ev.screenX && touchInfo.screenY === ev.screenY)) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
         ev.stopPropagation();
