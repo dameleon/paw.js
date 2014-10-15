@@ -30,7 +30,7 @@ function PawTouch(id, touchInfo, setting) {
     this.startX = touchInfo.pageX;
     this.startY = touchInfo.pageY;
     this.disposeTimer = null;
-    this.clicked = false;
+    this.preventClick = false;
     if (setting.fastClick) {
         setting.view.addEventListener(EVENT_TYPES.CLICK, this, true);
     }
@@ -80,11 +80,17 @@ function _end(touchInfo) {
             }
         }
         cond = this.triggerEvent(EVENT_TYPES.TAP, touchInfo);
-        if (cond && setting.fastClick) {
-            this.triggerMouseEvent(EVENT_TYPES.CLICK, touchInfo);
+        if (cond) {
+            if (setting.fastClick) {
+                this.triggerMouseEvent(EVENT_TYPES.CLICK, touchInfo);
+            }
+            if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
+                this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
+            }
         }
-        if (cond && __isDoubleTap(this.target, setting.doubleTapDuration)) {
-            this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
+        // NOTE: tapイベントがpreventされた場合、ネイティブのclickイベントを抑制する
+        else if (setting.fastClick) {
+            this.preventClick = true;
         }
         __updateLastTapTarget(this.target);
     }
@@ -171,7 +177,7 @@ function _triggerMouseEvent(type, touchInfo) {
 }
 
 function _handleEvent(ev) {
-    if (this.clicked) {
+    if (this.preventClick) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
         ev.stopPropagation();
@@ -179,7 +185,7 @@ function _handleEvent(ev) {
         this.unbindClickEvent();
         return false;
     }
-    this.clicked = true;
+    this.preventClick = true;
 }
 
 function _unbindClickEvent() {
