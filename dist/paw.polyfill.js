@@ -47,7 +47,7 @@ if (!Object.keys) {
   }());
 }
 
-/*! paw.js // @version 1.0.3, @license MIT, @author dameleon <dameleon@gmail.com> */
+/*! paw.js // @version 1.0.4, @license MIT, @author dameleon <dameleon@gmail.com> */
 ;(function(global, undefined) {
 'use strict';
 
@@ -376,7 +376,7 @@ function PawTouch(id, touchInfo, setting) {
     this.startX = touchInfo.pageX;
     this.startY = touchInfo.pageY;
     this.disposeTimer = null;
-    this.clicked = false;
+    this.preventClick = false;
     if (setting.fastClick) {
         setting.view.addEventListener(EVENT_TYPES.CLICK, this, true);
     }
@@ -411,7 +411,7 @@ function _end(touchInfo) {
     var y = touchInfo.pageY;
     var dx = x - this.startX;
     var dy = y - this.startY;
-    var pos;
+    var pos, cond;
 
     if (__sqrt(dx * dx + dy * dy) <= setting.motionThreshold) {
         if (this.target !== touchInfo.target) {
@@ -425,12 +425,16 @@ function _end(touchInfo) {
                 return this.dispose();
             }
         }
-        this.triggerEvent(EVENT_TYPES.TAP, touchInfo);
-        if (setting.fastClick) {
-            this.triggerMouseEvent(EVENT_TYPES.CLICK, touchInfo);
-        }
-        if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
-            this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
+        cond = this.triggerEvent(EVENT_TYPES.TAP, touchInfo);
+        if (cond) {
+            if (setting.fastClick) {
+                this.triggerMouseEvent(EVENT_TYPES.CLICK, touchInfo);
+            }
+            if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
+                this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
+            }
+        } else if (setting.fastClick) {
+            this.preventClick = true;
         }
         __updateLastTapTarget(this.target);
     }
@@ -491,7 +495,7 @@ function _triggerEvent(type, touchInfo) {
         detail
     );
 
-    this.target.dispatchEvent(event);
+    return this.target.dispatchEvent(event);
 }
 
 function _triggerMouseEvent(type, touchInfo) {
@@ -513,11 +517,11 @@ function _triggerMouseEvent(type, touchInfo) {
             null                        // relatedTarget
     );
 
-    this.target.dispatchEvent(event);
+    return this.target.dispatchEvent(event);
 }
 
 function _handleEvent(ev) {
-    if (this.clicked) {
+    if (this.preventClick) {
         ev.preventDefault();
         ev.stopImmediatePropagation();
         ev.stopPropagation();
@@ -525,7 +529,7 @@ function _handleEvent(ev) {
         this.unbindClickEvent();
         return false;
     }
-    this.clicked = true;
+    this.preventClick = true;
 }
 
 function _unbindClickEvent() {
