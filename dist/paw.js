@@ -1,4 +1,4 @@
-/*! paw.js // @version 1.0.5, @license MIT, @author dameleon <dameleon@gmail.com> */
+/*! paw.js // @version 1.0.6, @license MIT, @author dameleon <dameleon@gmail.com> */
 ;(function(global, undefined) {
 'use strict';
 
@@ -226,8 +226,8 @@ function __getTouchInfoList(ev) {
 // exports
 global.Paw = Paw;
 // for require.js
-if (!('process' in global) && (typeof global.define === 'function' && global.define.amd)) {
-    global.define([], function() {
+if (!('process' in global) && (typeof define === 'function' && define.amd)) {
+    define([], function() {
         return Paw;
     });
 }

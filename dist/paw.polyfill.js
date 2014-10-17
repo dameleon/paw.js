@@ -47,7 +47,7 @@ if (!Object.keys) {
   }());
 }
 
-/*! paw.js // @version 1.0.4, @license MIT, @author dameleon <dameleon@gmail.com> */
+/*! paw.js // @version 1.0.5, @license MIT, @author dameleon <dameleon@gmail.com> */
 ;(function(global, undefined) {
 'use strict';
 
@@ -433,7 +433,9 @@ function _end(touchInfo) {
             if (__isDoubleTap(this.target, setting.doubleTapDuration)) {
                 this.triggerEvent(EVENT_TYPES.DOUBLE_TAP, touchInfo);
             }
-        } else if (setting.fastClick) {
+        }
+        // NOTE: tapイベントがpreventされた場合、ネイティブのclickイベントを抑制する
+        else if (setting.fastClick) {
             this.preventClick = true;
         }
         __updateLastTapTarget(this.target);
